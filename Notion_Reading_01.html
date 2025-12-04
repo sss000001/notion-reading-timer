@@ -3,29 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yeah's Reading Time</title>
+    <title>Sun's Reading Time</title>
     <style>
         :root {
-            /* === 配色方案 === */
+            /* === 🎨 配色方案优化 === */
             --bg-color: transparent;
-            --text-main: #2c2c2c;  
-            --bar-bg: #eaeaea;     
             
-            /* ▼▼▼ 这里改成了蓝色 ▼▼▼ */
-            --bar-fill: #f2cbcb;   /* 这是一个经典的深蓝色 */
-            /* 如果喜欢亮一点的蓝，可以试用: #3498db */
-            /* 如果喜欢 Notion 原生蓝，可以试用: #0b6e99 */
-
-            /* 按钮颜色 (如果你想按钮也变成蓝色，把下面这个也改成蓝色即可) */
-            --btn-start: #2c3e50;  /* 稍微深一点的蓝黑色，配合蓝色条 */
-            --btn-stop: #c0392b;   
+            /* 文字颜色 */
+            --text-main: #2c3e50;  /* 深蓝灰，比纯黑柔和 */
+            --text-right: #34495e; /* 右侧数据的颜色，加深更有质感 */
+            
+            /* 进度条底槽 */
+            --bar-bg: #f0f2f5;     
+            
+            /* 进度条填充 (天蓝色) */
+            --bar-fill: #3498db;   
+            
+            /* 按钮颜色 (天蓝渐变) */
+            --btn-gradient-start: #4facfe;
+            --btn-gradient-end: #00f2fe;
+            --btn-shadow: rgba(79, 172, 254, 0.4);
+            
+            /* 停止按钮颜色 (柔和红) */
+            --btn-stop-bg: #ff6b6b;
+            --btn-stop-shadow: rgba(255, 107, 107, 0.4);
         }
 
         body {
-            /* 字体设置：优先使用 Didot 这种高级衬线体 */
+            /* 字体设置 */
             font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
             margin: 0;
-            padding: 20px;
+            padding: 10px; /* 减少内边距 */
             background-color: var(--bg-color);
             color: var(--text-main);
             display: flex;
@@ -35,102 +43,124 @@
             height: 100vh;
             box-sizing: border-box;
             user-select: none;
+            overflow: hidden; /* 防止出现滚动条 */
         }
 
-        /* 0. 标题 */
+        /* 0. 标题 - 紧凑化 */
         h1 {
             font-weight: normal;
-            margin: 0 0 10px 0;
-            font-size: 1.5rem;
+            margin: 0 0 5px 0; /* 减小下方间距 */
+            font-size: 1.4rem;
             letter-spacing: 1px;
             opacity: 0.8;
+            font-family: inherit;
         }
 
-        /* 1. 计时器 */
+        /* 1. 计时器 - 紧凑化 */
         #timer-display {
-            font-size: 5rem;
+            font-size: 4.5rem; /* 稍微调小一点点以免换行 */
             font-weight: 400;
             letter-spacing: 2px;
-            margin-bottom: 25px;
+            margin-bottom: 20px; /* 减小下方间距 */
             font-variant-numeric: tabular-nums;
             line-height: 1;
+            color: #2c2c2c;
         }
 
-        /* 2. 按钮 - 加粗，无斜体 */
+        /* 2. 按钮 - 天蓝立体风格 */
         button {
             border: none;
-            padding: 12px 50px;
-            font-size: 1.2rem;
-            font-family: inherit; 
-            font-weight: bold;    /* 加粗 */
-            font-style: normal;   /* 取消斜体 */
-            border-radius: 30px;  
+            padding: 10px 45px; /* 高度稍微减小 */
+            font-size: 1.1rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; /* 按钮文字改用无衬线体更现代 */
+            font-weight: 600;
+            border-radius: 50px; /* 胶囊圆角 */
             cursor: pointer;
             color: #fff;
-            background-color: var(--btn-start);
+            
+            /* 天蓝色渐变背景 */
+            background: linear-gradient(135deg, var(--btn-gradient-start) 0%, var(--btn-gradient-end) 100%);
+            
+            /* 投影带来立体感 */
+            box-shadow: 0 5px 15px var(--btn-shadow);
+            
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
+            margin-bottom: 25px; /* 减小与下方表格的距离 */
+            letter-spacing: 0.5px;
         }
 
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transform: translateY(-2px); /* 悬浮上移 */
+            box-shadow: 0 8px 20px var(--btn-shadow); /* 阴影加重 */
+            filter: brightness(1.05);
         }
 
         button:active {
-            transform: translateY(1px);
+            transform: translateY(1px); /* 点击下按 */
+            box-shadow: 0 2px 10px var(--btn-shadow);
         }
 
-        /* 3. 统计列表 - 四行布局 */
+        /* 停止状态的按钮样式 */
+        button.stop-mode {
+            background: var(--btn-stop-bg);
+            box-shadow: 0 5px 15px var(--btn-stop-shadow);
+        }
+        button.stop-mode:hover {
+            box-shadow: 0 8px 20px var(--btn-stop-shadow);
+        }
+
+        /* 3. 统计列表 - Grid布局解决间距问题 */
         .stats-container {
             width: 100%;
-            max-width: 450px;
+            max-width: 480px; /* 加宽容器 */
             display: flex;
             flex-direction: column;
-            gap: 16px; 
+            gap: 10px; /* 每一行的间距变得更紧凑 (原16px) */
         }
 
         .stat-row {
-            display: flex;
+            display: grid;
+            /* 关键布局：左(60px) | 中(自动填满) | 右(75px) */
+            grid-template-columns: 60px 1fr 75px; 
             align-items: center;
-            justify-content: space-between;
-            font-size: 1.1rem;
+            gap: 12px; /* 元素之间的水平间距 */
         }
 
         /* 左侧标签 */
         .label {
-            width: 70px;
+            text-align: left;
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
+            color: var(--text-main);
         }
 
-        /* 中间进度条 */
+        /* 中间进度条 - 自动拉长 */
         .progress-container {
-            flex-grow: 1;
-            height: 14px; 
+            height: 10px; /* 高度适中 */
             background-color: var(--bar-bg);
-            border-radius: 7px;
-            margin: 0 15px;
+            border-radius: 10px;
             overflow: hidden;
+            width: 100%; /* 占满格子 */
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); /* 内部微阴影，增加质感 */
         }
 
         .progress-bar {
             height: 100%;
-            background-color: var(--bar-fill); /* 这里会调用上面设置的蓝色 */
+            background-color: var(--bar-fill);
             width: 0%;
-            border-radius: 7px;
-            transition: width 0.5s ease;
+            border-radius: 10px;
+            transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            /* 给进度条加一点渐变光泽 */
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, transparent 100%);
         }
 
-        /* 右侧数据文字 */
+        /* 右侧数据文字 - 颜色优化 */
         .value-text {
-            width: 100px;
             text-align: right;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            font-size: 0.95rem;
-            color: #555;
-            font-weight: 500;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; /* 数字用无衬线体 */
+            font-size: 0.9rem;
+            color: var(--text-right); /* 使用更深的颜色 */
+            font-weight: 600;
         }
 
     </style>
@@ -146,10 +176,10 @@
     <!-- 按钮 -->
     <button id="toggle-btn" onclick="toggleTimer()">Start Reading</button>
 
-    <!-- 统计区域 (4行) -->
+    <!-- 统计区域 -->
     <div class="stats-container">
         
-        <!-- Today (显示分钟) -->
+        <!-- Today -->
         <div class="stat-row">
             <div class="label">Today</div>
             <div class="progress-container">
@@ -158,7 +188,7 @@
             <div class="value-text" id="text-day">0 mins</div>
         </div>
 
-        <!-- Week (显示小时) -->
+        <!-- Week -->
         <div class="stat-row">
             <div class="label">Week</div>
             <div class="progress-container">
@@ -167,7 +197,7 @@
             <div class="value-text" id="text-week">0.0 hrs</div>
         </div>
 
-        <!-- Month (显示小时) -->
+        <!-- Month -->
         <div class="stat-row">
             <div class="label">Month</div>
             <div class="progress-container">
@@ -176,7 +206,7 @@
             <div class="value-text" id="text-month">0.0 hrs</div>
         </div>
 
-        <!-- Year (显示小时) -->
+        <!-- Year -->
         <div class="stat-row">
             <div class="label">Year</div>
             <div class="progress-container">
@@ -230,11 +260,11 @@
             if (isRunning) {
                 stopTimer();
                 btn.innerText = "Start Reading";
-                btn.style.backgroundColor = "var(--btn-start)";
+                btn.classList.remove("stop-mode"); // 移除红色样式
             } else {
                 startTimer();
                 btn.innerText = "Stop Reading";
-                btn.style.backgroundColor = "var(--btn-stop)";
+                btn.classList.add("stop-mode"); // 添加红色样式
             }
         }
 
@@ -255,7 +285,7 @@
             startTime = savedStart;
             const btn = document.getElementById('toggle-btn');
             btn.innerText = "Stop Reading";
-            btn.style.backgroundColor = "var(--btn-stop)";
+            btn.classList.add("stop-mode");
 
             timerInterval = setInterval(() => {
                 const currentElapsed = Date.now() - startTime;
