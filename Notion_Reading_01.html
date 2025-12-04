@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeah's Reading Time</title>
+    <style>
+        :root {
+            /* === 配色方案 === */
+            --bg-color: transparent;
+            --text-main: #2c2c2c;  
+            --bar-bg: #eaeaea;     
+            
+            /* ▼▼▼ 这里改成了蓝色 ▼▼▼ */
+            --bar-fill: #f2cbcb;   /* 这是一个经典的深蓝色 */
+            /* 如果喜欢亮一点的蓝，可以试用: #3498db */
+            /* 如果喜欢 Notion 原生蓝，可以试用: #0b6e99 */
+
+            /* 按钮颜色 (如果你想按钮也变成蓝色，把下面这个也改成蓝色即可) */
+            --btn-start: #2c3e50;  /* 稍微深一点的蓝黑色，配合蓝色条 */
+            --btn-stop: #c0392b;   
+        }
+
+        body {
+            /* 字体设置：优先使用 Didot 这种高级衬线体 */
+            font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* 0. 标题 */
+        h1 {
+            font-weight: normal;
+            margin: 0 0 10px 0;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        /* 1. 计时器 */
+        #timer-display {
+            font-size: 5rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
+        /* 2. 按钮 - 加粗，无斜体 */
+        button {
+            border: none;
+            padding: 12px 50px;
+            font-size: 1.2rem;
+            font-family: inherit; 
+            font-weight: bold;    /* 加粗 */
+            font-style: normal;   /* 取消斜体 */
+            border-radius: 30px;  
+            cursor: pointer;
+            color: #fff;
+            background-color: var(--btn-start);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        /* 3. 统计列表 - 四行布局 */
+        .stats-container {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px; 
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.1rem;
+        }
+
+        /* 左侧标签 */
+        .label {
+            width: 70px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* 中间进度条 */
+        .progress-container {
+            flex-grow: 1;
+            height: 14px; 
+            background-color: var(--bar-bg);
+            border-radius: 7px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--bar-fill); /* 这里会调用上面设置的蓝色 */
+            width: 0%;
+            border-radius: 7px;
+            transition: width 0.5s ease;
+        }
+
+        /* 右侧数据文字 */
+        .value-text {
+            width: 100px;
+            text-align: right;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 0.95rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 标题 -->
+    <h1>Sun's Reading Time</h1>
+
+    <!-- 计时器 -->
+    <div id="timer-display">00:00:00</div>
+
+    <!-- 按钮 -->
+    <button id="toggle-btn" onclick="toggleTimer()">Start Reading</button>
+
+    <!-- 统计区域 (4行) -->
+    <div class="stats-container">
+        
+        <!-- Today (显示分钟) -->
+        <div class="stat-row">
+            <div class="label">Today</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="bar-day"></div>
+            </div>
+            <div class="value-text" id="text-day">0 mins</div>
+        </div>
+
+        <!-- Week (显示小时) -->
+        <div class="stat-row">
+            <div class="label">Week</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="bar-week"></div>
+            </div>
+            <div class="value-text" id="text-week">0.0 hrs</div>
+        </div>
+
+        <!-- Month (显示小时) -->
+        <div class="stat-row">
+            <div class="label">Month</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="bar-month"></div>
+            </div>
+            <div class="value-text" id="text-month">0.0 hrs</div>
+        </div>
+
+        <!-- Year (显示小时) -->
+        <div class="stat-row">
+            <div class="label">Year</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="bar-year"></div>
+            </div>
+            <div class="value-text" id="text-year">0.0 hrs</div>
+        </div>
+
+    </div>
+
+    <script>
+        // ================= 视觉参考值 (满条标准) =================
+        const VISUAL_GOALS = {
+            day_mins: 120,     // 2小时
+            week_hours: 14,    // 14小时
+            month_hours: 60,   // 60小时
+            year_hours: 365    // 365小时
+        };
+        // =======================================================
+
+        let timerInterval;
+        let isRunning = false;
+        let startTime = 0;
+        
+        let stats = {
+            day: 0, 
+            week: 0,
+            month: 0,
+            year: 0,
+            lastDate: null,
+            lastWeek: null,
+            lastMonth: null,
+            lastYear: null
+        };
+
+        window.onload = function() {
+            loadData();
+            checkDateReset();
+            updateUI();
+            
+            if(localStorage.getItem('reading_isRunning_v3') === 'true') {
+                const savedStart = parseInt(localStorage.getItem('reading_startTime_v3'));
+                if(savedStart) {
+                    resumeTimer(savedStart);
+                }
+            }
+        };
+
+        function toggleTimer() {
+            const btn = document.getElementById('toggle-btn');
+            if (isRunning) {
+                stopTimer();
+                btn.innerText = "Start Reading";
+                btn.style.backgroundColor = "var(--btn-start)";
+            } else {
+                startTimer();
+                btn.innerText = "Stop Reading";
+                btn.style.backgroundColor = "var(--btn-stop)";
+            }
+        }
+
+        function startTimer() {
+            isRunning = true;
+            startTime = Date.now();
+            localStorage.setItem('reading_isRunning_v3', 'true');
+            localStorage.setItem('reading_startTime_v3', startTime);
+
+            timerInterval = setInterval(() => {
+                const currentElapsed = Date.now() - startTime;
+                updateDisplay(currentElapsed);
+            }, 1000);
+        }
+
+        function resumeTimer(savedStart) {
+            isRunning = true;
+            startTime = savedStart;
+            const btn = document.getElementById('toggle-btn');
+            btn.innerText = "Stop Reading";
+            btn.style.backgroundColor = "var(--btn-stop)";
+
+            timerInterval = setInterval(() => {
+                const currentElapsed = Date.now() - startTime;
+                updateDisplay(currentElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            
+            const sessionTime = Date.now() - startTime;
+            
+            stats.day += sessionTime;
+            stats.week += sessionTime;
+            stats.month += sessionTime;
+            stats.year += sessionTime;
+            
+            saveData();
+            
+            localStorage.setItem('reading_isRunning_v3', 'false');
+            localStorage.removeItem('reading_startTime_v3');
+            
+            updateUI();
+            document.getElementById('timer-display').innerText = "00:00:00";
+        }
+
+        function updateDisplay(ms) {
+            const seconds = Math.floor((ms / 1000) % 60);
+            const minutes = Math.floor((ms / (1000 * 60)) % 60);
+            const hours = Math.floor((ms / (1000 * 60 * 60)));
+
+            const str = 
+                (hours < 10 ? "0" + hours : hours) + ":" + 
+                (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                (seconds < 10 ? "0" + seconds : seconds);
+
+            document.getElementById('timer-display').innerText = str;
+        }
+
+        function checkDateReset() {
+            const now = new Date();
+            const todayStr = now.toDateString();
+            const thisWeek = getWeekNumber(now); 
+            const thisMonth = now.getMonth();
+            const thisYear = now.getFullYear();
+
+            if (stats.lastDate !== todayStr) { stats.day = 0; stats.lastDate = todayStr; }
+            if (stats.lastWeek !== thisWeek) { stats.week = 0; stats.lastWeek = thisWeek; }
+            if (stats.lastMonth !== thisMonth) { stats.month = 0; stats.lastMonth = thisMonth; }
+            if (stats.lastYear !== thisYear) { stats.year = 0; stats.lastYear = thisYear; }
+            saveData();
+        }
+
+        function updateUI() {
+            const dayMins = Math.floor(stats.day / 60000);
+            const weekHrs = (stats.week / 3600000).toFixed(1);
+            const monthHrs = (stats.month / 3600000).toFixed(1);
+            const yearHrs = (stats.year / 3600000).toFixed(1);
+
+            document.getElementById('text-day').innerText = `${dayMins} mins`;
+            document.getElementById('text-week').innerText = `${weekHrs} hrs`;
+            document.getElementById('text-month').innerText = `${monthHrs} hrs`;
+            document.getElementById('text-year').innerText = `${yearHrs} hrs`;
+
+            setBarWidth('bar-day', dayMins, VISUAL_GOALS.day_mins);
+            setBarWidth('bar-week', parseFloat(weekHrs), VISUAL_GOALS.week_hours);
+            setBarWidth('bar-month', parseFloat(monthHrs), VISUAL_GOALS.month_hours);
+            setBarWidth('bar-year', parseFloat(yearHrs), VISUAL_GOALS.year_hours);
+        }
+
+        function setBarWidth(elementId, value, max) {
+            let percent = (value / max) * 100;
+            if (percent > 100) percent = 100;
+            document.getElementById(elementId).style.width = percent + "%";
+        }
+
+        function saveData() { localStorage.setItem('reading_stats_v3', JSON.stringify(stats)); }
+        function loadData() {
+            const saved = localStorage.getItem('reading_stats_v3');
+            if (saved) stats = JSON.parse(saved);
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        }
+    </script>
+</body>
+</html>
