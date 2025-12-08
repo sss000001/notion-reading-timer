@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sun's Reading Time</title>
+    <style>
+        :root {
+            /* === 🎨 配色方案 === */
+            --bg-color: transparent;
+            --text-main: #2c3e50;  
+            --text-right: #5d6d7e; 
+            --bar-bg: #f0f2f5;     
+            --bar-fill: #3498db;   
+            
+            --title-color: #2980b9; 
+            --timer-color: #2c2c2c;
+
+            --btn-gradient-start: #4facfe;
+            --btn-gradient-end: #00f2fe;
+            --btn-shadow: rgba(79, 172, 254, 0.4);
+            
+            --btn-stop-bg: #ff6b6b;
+            --btn-stop-shadow: rgba(255, 107, 107, 0.4);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .main-card {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 标题 */
+        h1 {
+            font-weight: normal;
+            margin: 0 0 15px 0;
+            font-size: 1.6rem;
+            letter-spacing: 0.5px;
+            opacity: 1;
+            font-family: "Georgia", "Times New Roman", serif;
+            font-style: italic;
+            color: var(--title-color);
+        }
+
+        /* 计时器 */
+        #timer-display {
+            font-size: 4.5rem; 
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            color: var(--timer-color); 
+            text-shadow: none; 
+            font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+        }
+
+        /* 控制区容器 (居中) */
+        .controls-wrapper {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center; 
+            gap: 25px; 
+            margin-bottom: 30px; 
+        }
+
+        /* 计数圆圈 */
+        .session-badge {
+            width: 42px; 
+            height: 42px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            color: var(--bar-fill);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
+            border: 2px solid var(--bar-bg);
+            cursor: help;
+            transition: transform 0.3s ease;
+            flex-shrink: 0; 
+        }
+        .session-badge:hover { transform: scale(1.1); }
+
+        /* 按钮 */
+        button {
+            border: none;
+            height: 42px; 
+            width: 200px; 
+            font-size: 1.05rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(135deg, var(--btn-gradient-start) 0%, var(--btn-gradient-end) 100%);
+            box-shadow: 0 5px 15px var(--btn-shadow);
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--btn-shadow);
+            filter: brightness(1.05);
+        }
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px var(--btn-shadow);
+        }
+        button.stop-mode {
+            background: var(--btn-stop-bg);
+            box-shadow: 0 5px 15px var(--btn-stop-shadow);
+        }
+
+        /* 统计列表 */
+        .stats-container {
+            width: 100%; 
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 70px; 
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label {
+            text-align: left;
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--text-main);
+            font-family: "Georgia", "Times New Roman", serif;
+        }
+
+        .progress-container {
+            height: 8px;
+            background-color: var(--bar-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--bar-fill);
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+        }
+
+        .value-text {
+            text-align: right;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-right);
+            font-weight: 600;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-card">
+        
+        <!-- 标题 -->
+        <h1>Sun's Reading Time</h1>
+
+        <!-- 计时器 -->
+        <div id="timer-display">00:00:00</div>
+
+        <!-- 控制区 -->
+        <div class="controls-wrapper">
+            <div class="session-badge" title="Total Sessions">
+                <span id="session-count">0</span>
+            </div>
+            <button id="toggle-btn" onclick="toggleTimer()">Start Reading</button>
+        </div>
+
+        <!-- 统计条 -->
+        <div class="stats-container">
+            <!-- Today -->
+            <div class="stat-row">
+                <div class="label">Today</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="bar-day"></div>
+                </div>
+                <div class="value-text" id="text-day">0 mins</div>
+            </div>
+
+            <!-- Week -->
+            <div class="stat-row">
+                <div class="label">Week</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="bar-week"></div>
+                </div>
+                <div class="value-text" id="text-week">0.0 hrs</div>
+            </div>
+
+            <!-- Month -->
+            <div class="stat-row">
+                <div class="label">Month</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="bar-month"></div>
+                </div>
+                <div class="value-text" id="text-month">0.0 hrs</div>
+            </div>
+
+            <!-- Year -->
+            <div class="stat-row">
+                <div class="label">Year</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="bar-year"></div>
+                </div>
+                <div class="value-text" id="text-year">0.0 hrs</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= 视觉参考值 =================
+        const VISUAL_GOALS = {
+            day_mins: 120,    
+            week_hours: 14,    
+            month_hours: 60,   
+            year_hours: 365    
+        };
+        // ===========================================
+
+        // 关键修改：恢复到 v3 版本，这样你的老数据就回来了！
+        const STORAGE_KEY = 'reading_stats_v3';
+
+        let timerInterval;
+        let isRunning = false;
+        let startTime = 0;
+        
+        let stats = {
+            day: 0, week: 0, month: 0, year: 0,
+            totalSessions: 0,
+            lastDate: null, lastWeek: null, lastMonth: null, lastYear: null
+        };
+
+        window.onload = function() {
+            loadData();
+            checkDateReset(); // 这里包含了新的清零逻辑，会智能判断
+            updateUI();
+            
+            if(localStorage.getItem(STORAGE_KEY + '_running') === 'true') {
+                const savedStart = parseInt(localStorage.getItem(STORAGE_KEY + '_start'));
+                if(savedStart) {
+                    resumeTimer(savedStart);
+                }
+            }
+        };
+
+        function toggleTimer() {
+            const btn = document.getElementById('toggle-btn');
+            if (isRunning) {
+                stopTimer();
+                btn.innerText = "Start Reading";
+                btn.classList.remove("stop-mode");
+            } else {
+                startTimer();
+                btn.innerText = "Stop Reading";
+                btn.classList.add("stop-mode");
+            }
+        }
+
+        function startTimer() {
+            isRunning = true;
+            startTime = Date.now();
+            stats.totalSessions = (stats.totalSessions || 0) + 1;
+            saveData(); 
+            updateUI(); 
+            localStorage.setItem(STORAGE_KEY + '_running', 'true');
+            localStorage.setItem(STORAGE_KEY + '_start', startTime);
+            timerInterval = setInterval(() => {
+                const currentElapsed = Date.now() - startTime;
+                updateDisplay(currentElapsed);
+            }, 1000);
+        }
+
+        function resumeTimer(savedStart) {
+            isRunning = true;
+            startTime = savedStart;
+            const btn = document.getElementById('toggle-btn');
+            btn.innerText = "Stop Reading";
+            btn.classList.add("stop-mode");
+            timerInterval = setInterval(() => {
+                const currentElapsed = Date.now() - startTime;
+                updateDisplay(currentElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            const sessionTime = Date.now() - startTime;
+            
+            stats.day += sessionTime;
+            stats.week += sessionTime;
+            stats.month += sessionTime;
+            stats.year += sessionTime;
+            
+            saveData();
+            localStorage.setItem(STORAGE_KEY + '_running', 'false');
+            localStorage.removeItem(STORAGE_KEY + '_start');
+            updateUI();
+            document.getElementById('timer-display').innerText = "00:00:00";
+        }
+
+        function updateDisplay(ms) {
+            const seconds = Math.floor((ms / 1000) % 60);
+            const minutes = Math.floor((ms / (1000 * 60)) % 60);
+            const hours = Math.floor((ms / (1000 * 60 * 60)));
+            const str = 
+                (hours < 10 ? "0" + hours : hours) + ":" + 
+                (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                (seconds < 10 ? "0" + seconds : seconds);
+            document.getElementById('timer-display').innerText = str;
+        }
+
+        // === 自动清零逻辑 (保护历史数据的同时，执行清零) ===
+        function checkDateReset() {
+            const now = new Date();
+            const todayStr = now.toDateString();
+            const thisWeek = getWeekNumber(now); 
+            const thisMonth = now.getMonth();   // 0-11
+            const thisYear = now.getFullYear();
+
+            // 1. 跨天清零
+            if (stats.lastDate !== todayStr) { 
+                stats.day = 0; 
+                stats.lastDate = todayStr; 
+            }
+
+            // 2. 跨周清零 (智能周数判断)
+            if (stats.lastWeek !== thisWeek || stats.lastYear !== thisYear) { 
+                // 只有当这一周真的变了，才清零
+                if (stats.lastWeek !== thisWeek) {
+                    stats.week = 0; 
+                    stats.lastWeek = thisWeek; 
+                }
+            }
+
+            // 3. 跨月清零 (月份变了就清零)
+            if (stats.lastMonth !== thisMonth || stats.lastYear !== thisYear) { 
+                if (stats.lastMonth !== thisMonth) {
+                    stats.month = 0; 
+                    stats.lastMonth = thisMonth; 
+                }
+            }
+
+            // 4. 跨年清零
+            if (stats.lastYear !== thisYear) { 
+                stats.year = 0; 
+                stats.lastYear = thisYear; 
+            }
+            
+            saveData();
+        }
+
+        function updateUI() {
+            document.getElementById('session-count').innerText = stats.totalSessions || 0;
+            const dayMins = Math.floor(stats.day / 60000);
+            const weekHrs = (stats.week / 3600000).toFixed(1);
+            const monthHrs = (stats.month / 3600000).toFixed(1);
+            const yearHrs = (stats.year / 3600000).toFixed(1);
+
+            document.getElementById('text-day').innerText = `${dayMins} mins`;
+            document.getElementById('text-week').innerText = `${weekHrs} hrs`;
+            document.getElementById('text-month').innerText = `${monthHrs} hrs`;
+            document.getElementById('text-year').innerText = `${yearHrs} hrs`;
+
+            setBarWidth('bar-day', dayMins, VISUAL_GOALS.day_mins);
+            setBarWidth('bar-week', parseFloat(weekHrs), VISUAL_GOALS.week_hours);
+            setBarWidth('bar-month', parseFloat(monthHrs), VISUAL_GOALS.month_hours);
+            setBarWidth('bar-year', parseFloat(yearHrs), VISUAL_GOALS.year_hours);
+        }
+
+        function setBarWidth(elementId, value, max) {
+            let percent = (value / max) * 100;
+            if (percent > 100) percent = 100;
+            document.getElementById(elementId).style.width = percent + "%";
+        }
+
+        function saveData() { 
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(stats)); 
+        }
+        
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                stats = JSON.parse(saved);
+            }
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        }
+    </script>
+</body>
+</html>
