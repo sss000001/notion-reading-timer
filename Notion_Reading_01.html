@@ -252,8 +252,8 @@
         };
         // ===========================================
 
-        // 升级版本号 v5：强制刷新数据，确保逻辑生效
-        const STORAGE_KEY = 'reading_stats_v5';
+        // 关键修改：恢复到 v3 版本，这样你的老数据就回来了！
+        const STORAGE_KEY = 'reading_stats_v3';
 
         let timerInterval;
         let isRunning = false;
@@ -267,7 +267,7 @@
 
         window.onload = function() {
             loadData();
-            checkDateReset(); // 关键：每次加载都会检查是否需要清零
+            checkDateReset(); // 这里包含了新的清零逻辑，会智能判断
             updateUI();
             
             if(localStorage.getItem(STORAGE_KEY + '_running') === 'true') {
@@ -345,7 +345,7 @@
             document.getElementById('timer-display').innerText = str;
         }
 
-        // === 自动清零逻辑 (包含 日/周/月/年) ===
+        // === 自动清零逻辑 (保护历史数据的同时，执行清零) ===
         function checkDateReset() {
             const now = new Date();
             const todayStr = now.toDateString();
@@ -359,15 +359,16 @@
                 stats.lastDate = todayStr; 
             }
 
-            // 2. 跨周清零
+            // 2. 跨周清零 (智能周数判断)
             if (stats.lastWeek !== thisWeek || stats.lastYear !== thisYear) { 
+                // 只有当这一周真的变了，才清零
                 if (stats.lastWeek !== thisWeek) {
                     stats.week = 0; 
                     stats.lastWeek = thisWeek; 
                 }
             }
 
-            // 3. 跨月清零 (如果月份变了，或者年份变了)
+            // 3. 跨月清零 (月份变了就清零)
             if (stats.lastMonth !== thisMonth || stats.lastYear !== thisYear) { 
                 if (stats.lastMonth !== thisMonth) {
                     stats.month = 0; 
